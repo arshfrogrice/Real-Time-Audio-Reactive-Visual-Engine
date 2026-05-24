@@ -20,8 +20,8 @@ pygame.display.set_caption("Audio Reactive Visual Engine")
 
 pygame.mixer.music.load(song)
 pygame.mixer.music.play()  
-
 screen = pygame.display.set_mode((Width, Height))
+
                 
 clock = pygame.time.Clock()
 time = 0
@@ -63,11 +63,15 @@ class Particle:
         
 particles = [Particle() for _ in range(120)]
 
+pulse = 0
 
 
 running = True
 while running:
     clock.tick(60)
+    
+    current_time = pygame.mixer.music.get_pos() / 1000
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -75,7 +79,11 @@ while running:
 
     screen.fill((5, 5, 15))
 
-    pulse = abs(math.sin(time)) * 8
+    pulse *= 0.9
+    
+    for beat in data["beat_times"]:
+        if abs(current_time - beat) < 0.1:
+            pulse = 10
 
     for particle in particles:
         particle.move()
