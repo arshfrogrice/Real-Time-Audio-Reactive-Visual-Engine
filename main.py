@@ -4,7 +4,6 @@ import math
 
 
 
-
 pygame.init()
 pygame.mixer.init()
 
@@ -42,9 +41,9 @@ class Particle:
             random.randint(100, 255),
         )
 
-    def move(self):
-        self.x += self.speed_x
-        self.y += self.speed_y
+    def move(self,energy):
+        self.x += self.speed_x * (1 + energy * 8)
+        self.y += self.speed_y * (1 + energy * 8)
 
         if self.x <= 0 or self.x >= Width:
             self.speed_x *= -1
@@ -59,39 +58,87 @@ class Particle:
             (int(self.x), int(self.y)),
             int(self.size + pulse)
         )
+    def lines():
+        for i in range(len(particles)):
+            for j in range(i + 1, len(particles)):
+
+                p1 = particles[i]
+                p2 = particles[j]
+
+                distance = math.sqrt(
+                    (p1.x - p2.x) ** 2 +
+                    (p1.y - p2.y) ** 2
+                )
+
+                if distance < 120:
+
+                    pygame.draw.line(
+                        screen,
+                        (0, 255, 255),
+                        (int(p1.x), int(p1.y)),
+                        (int(p2.x), int(p2.y)),
+                        1
+                    )
         
         
-particles = [Particle() for _ in range(120)]
+particles = [Particle() for _ in range(150)]
 
 pulse = 0
 
+fade_surface = pygame.Surface((Width, Height))
+fade_surface.set_alpha(50)
+fade_surface.fill((5, 5, 15))
 
+
+#rms stuff
+def get_current_rms(current_time):
+
+    closest_index = min(
+        range(len(data["rms_times"])),
+        key=lambda i: abs(data["rms_times"][i] - current_time)
+    )
+
+    return data["rms"][closest_index]
+
+
+
+    
 running = True
 while running:
     clock.tick(60)
     
     current_time = pygame.mixer.music.get_pos() / 1000
 
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    screen.fill((5, 5, 15))
+    
+    screen.blit(fade_surface, (0, 0))
 
     pulse *= 0.9
     
     for beat in data["beat_times"]:
         if abs(current_time - beat) < 0.1:
-            pulse = 10
+            pulse = 8
+            
+    Particle.lines()
+    
+    #rms stuff
+    current_time = pygame.mixer.music.get_pos() / 1000
+    current_rms = get_current_rms(current_time)
 
     for particle in particles:
-        particle.move()
-        particle.draw(pulse)
+        particle.move(current_rms)
+        particle.draw(pulse + current_rms * 8)
 
     pygame.display.flip()
 
     time += 0.03
+    
+    
+    
+    
     
   
     
