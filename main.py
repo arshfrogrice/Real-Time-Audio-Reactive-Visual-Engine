@@ -29,11 +29,15 @@ class Particle:
     def __init__(self):
         self.x = random.randint(0, Width)
         self.y = random.randint(0, Height)
+        
+        #adding velocity to the particles
+        self.vx = random.uniform(-2, 2)
+        self.vy = random.uniform(-2, 2)
 
         self.size = random.randint(2, 6)
 
-        self.speed_x = random.uniform(-2, 2)
-        self.speed_y = random.uniform(-2, 2)
+        #self.speed_x = random.uniform(-2, 2)
+        #self.speed_y = random.uniform(-2, 2)
 
         self.color = (
             random.randint(100, 255),
@@ -41,15 +45,26 @@ class Particle:
             random.randint(100, 255),
         )
 
-    def move(self,energy):
-        self.x += self.speed_x * (1 + energy * 8)
-        self.y += self.speed_y * (1 + energy * 8)
+    def move(self,energy,time):
+        self.x += self.vx * (1 + energy * 8)
+        self.y += self.vy * (1 + energy * 8)
 
         if self.x <= 0 or self.x >= Width:
-            self.speed_x *= -1
+            self.vx *= -1
 
         if self.y <= 0 or self.y >= Height:
-            self.speed_y *= -1
+            self.vy *= -1
+            
+        self.vx *= 0.98
+        self.vy *= 0.98    
+        
+        #noise systems 
+        angle_x = math.sin(self.x * 0.01 + time) * 2
+        #angle_y = math.sin(self.y * 0.01 + time) * 2
+
+        self.vx += math.cos(angle_x) * 0.02
+        self.vy += math.sin(angle_x) * 0.02
+            
 
     def draw(self, pulse):
         pygame.draw.circle(
@@ -70,7 +85,7 @@ class Particle:
                     (p1.y - p2.y) ** 2
                 )
 
-                if distance < 120:
+                if distance < 100:
 
                     pygame.draw.line(
                         screen,
@@ -121,15 +136,17 @@ while running:
     for beat in data["beat_times"]:
         if abs(current_time - beat) < 0.1:
             pulse = 8
+            for particle in particles:
+                particle.vx += random.uniform(-0.5, 0.5)
+                particle.vy += random.uniform(-0.5, 0.5)
             
     Particle.lines()
     
     #rms stuff
-    current_time = pygame.mixer.music.get_pos() / 1000
     current_rms = get_current_rms(current_time)
 
     for particle in particles:
-        particle.move(current_rms)
+        particle.move(current_rms,time)
         particle.draw(pulse + current_rms * 8)
 
     pygame.display.flip()
