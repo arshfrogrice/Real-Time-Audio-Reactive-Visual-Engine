@@ -25,6 +25,10 @@ screen = pygame.display.set_mode((Width, Height))
 clock = pygame.time.Clock()
 time = 0
 
+smooth_bass = 0
+smooth_mid = 0
+smooth_treble = 0
+
 class Particle:
     def __init__(self):
         self.x = random.randint(0, Width)
@@ -73,7 +77,8 @@ class Particle:
             (int(self.x), int(self.y)),
             int(self.size + pulse)
         )
-    def lines():
+    def lines(brightness):
+        
         for i in range(len(particles)):
             for j in range(i + 1, len(particles)):
 
@@ -88,11 +93,11 @@ class Particle:
                 if distance < 100:
 
                     pygame.draw.line(
-                        screen,
-                        (0, 255, 255),
-                        (int(p1.x), int(p1.y)),
-                        (int(p2.x), int(p2.y)),
-                        1
+                    screen,
+                    (50, line_intensity, 255),
+                    (int(p1.x), int(p1.y)),
+                    (int(p2.x), int(p2.y)),
+                    1
                     )
         
         
@@ -115,14 +120,56 @@ def get_current_rms(current_time):
 
     return data["rms"][closest_index]
 
+def get_current_bass(current_time):
 
+    closest_index = min(
+        range(len(data["freq_times"])),
+        key=lambda i: abs(data["freq_times"][i] - current_time)
+    )
+
+    return data["bass"][closest_index]
+
+def get_current_mid(current_time):
+
+    closest_index = min(
+        range(len(data["freq_times"])),
+        key=lambda i: abs(data["freq_times"][i] - current_time)
+    )
+
+    return data["mid"][closest_index]
+
+def get_current_treble(current_time):
+
+    closest_index = min(
+        range(len(data["freq_times"])),
+        key=lambda i: abs(data["freq_times"][i] - current_time)
+    )
+
+    return data["treble"][closest_index]
 
     
 running = True
 while running:
     clock.tick(60)
-    
     current_time = pygame.mixer.music.get_pos() / 1000
+    #rms stuff
+    current_rms = get_current_rms(current_time)
+    
+    #fft analysis stuff 
+    current_bass = get_current_bass(current_time)
+    current_mid = get_current_mid(current_time)
+    current_treble = get_current_treble(current_time) 
+    
+    smooth_bass = smooth_bass * 0.9 + current_bass * 0.1
+    smooth_mid = smooth_mid * 0.9 + current_mid * 0.1
+    smooth_treble = smooth_treble * 0.9 + current_treble * 0.1
+    
+    line_intensity = max(
+    100, min(255, int(smooth_treble * 40+100)))
+    
+    bass_force = math.sqrt(smooth_bass) * 0.1
+    flow_strength = smooth_mid * 0.002 
+    
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -137,13 +184,10 @@ while running:
         if abs(current_time - beat) < 0.1:
             pulse = 8
             for particle in particles:
-                particle.vx += random.uniform(-0.5, 0.5)
-                particle.vy += random.uniform(-0.5, 0.5)
+                particle.vx += random.uniform(-bass_force, bass_force)
+                particle.vy += random.uniform(-bass_force, bass_force)
             
-    Particle.lines()
-    
-    #rms stuff
-    current_rms = get_current_rms(current_time)
+    Particle.lines(line_intensity)
 
     for particle in particles:
         particle.move(current_rms,time)
@@ -152,6 +196,8 @@ while running:
     pygame.display.flip()
 
     time += 0.03
+    
+
     
     
     
