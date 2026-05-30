@@ -63,11 +63,11 @@ class Particle:
         self.vy *= 0.98    
         
         #noise systems 
-        angle_x = math.sin(self.x * 0.01 + time) * 2
+        #angle_x = math.sin(self.x * 0.01 + time) * 2
         #angle_y = math.sin(self.y * 0.01 + time) * 2
 
-        self.vx += math.cos(angle_x) * 0.02
-        self.vy += math.sin(angle_x) * 0.02
+        self.vx += math.sin(self.y * 0.01 + time) * 0.02
+        self.vy += math.cos(self.x * 0.01 + time) * 0.02
             
 
     def draw(self, pulse):
